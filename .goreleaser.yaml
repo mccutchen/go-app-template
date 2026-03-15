@@ -1,0 +1,105 @@
+version: 2
+
+# sort tags by date, so that a final release tag will be chosen over a
+# pre-release tag when they point to the same commit.
+git:
+  tag_sort: "-creatordate"
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{.Date}}
+
+# replace per-arch macos binaries with a single universal binary
+universal_binaries:
+  - replace: true
+
+source:
+  enabled: true
+
+sboms:
+  - id: archive
+    artifacts: archive
+  - id: source
+    artifacts: source
+
+archives:
+  - name_template: >-
+      {{ .ProjectName }}-
+      {{- .Os | tolower }}-
+      {{- .Arch }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    formats:
+      - tar.gz
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+release:
+  draft: false
+  prerelease: auto
+  mode: replace
+
+kos:
+  - repositories:
+      - "{{.Env.GITHUB_REPOSITORY}}"
+      - "ghcr.io/{{.Env.GITHUB_REPOSITORY}}"
+    tags:
+      - "{{.Version}}"
+      - "{{.Major}}.{{.Minor}}"
+      - latest
+    bare: true
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    sbom: spdx
+    creation_time: "{{.CommitTimestamp}}"
+    ko_data_creation_time: "{{.CommitTimestamp}}"
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - "-s"
+      - "-w"
+      - "-X main.version={{.Version}}"
+      - "-X main.commit={{.ShortCommit}}"
+      - "-X main.date={{.Date}}"
+
+docker_signs:
+  - cmd: cosign
+    args:
+      - sign
+      - --yes
+      - "${artifact}"
+    artifacts: all
+
+notarize:
+  macos:
+    - enabled: "{{not .IsSnapshot }}"
+
+      sign:
+        certificate: "{{.Env.QUILL_SIGN_P12}}"
+        password: "{{.Env.QUILL_SIGN_PASSWORD}}"
+
+      notarize:
+        issuer_id: "{{.Env.QUILL_NOTARY_ISSUER}}"
+        key_id: "{{.Env.QUILL_NOTARY_KEY_ID}}"
+        key: "{{.Env.QUILL_NOTARY_KEY}}"
+        wait: true
+        # Apple rejects JWTs with ttl > 20m, quill sets token lifetime to
+        # this timeout + 2m.
+        timeout: 18m

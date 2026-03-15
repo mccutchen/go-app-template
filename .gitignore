@@ -1,0 +1,5 @@
+.envrc
+*.out
+dist
+out
+debug-notarize
