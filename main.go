@@ -1,3 +1,4 @@
+// Package main implements a minimal example CLI app.
 package main
 
 import (
