@@ -18,6 +18,7 @@ jobs:
     name: release
     runs-on: ubuntu-latest
     permissions:
+      # for pushing releases and signing/attesting release artifacts
       contents: write
       packages: write
       id-token: write
