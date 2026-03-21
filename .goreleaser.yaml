@@ -55,8 +55,8 @@ release:
 
 kos:
   - repositories:
-      - "{{.Env.GITHUB_REPOSITORY}}"
-      - "ghcr.io/{{.Env.GITHUB_REPOSITORY}}"
+      - mccutchen/go-app-template
+      - ghcr.io/mccutchen/go-app-template
     tags:
       - "{{.Version}}"
       - "{{.Major}}.{{.Minor}}"
