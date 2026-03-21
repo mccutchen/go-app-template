@@ -67,3 +67,26 @@ jobs:
       - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-checksums: ./dist/checksums.txt
+
+      - name: Extract OCI image digests
+        if: github.event_name != 'pull_request'
+        id: image-digests
+        run: |
+          dockerhub=$(jq -r '[.[] | select(.type == "Docker Manifest" and (.name | startswith("mccutchen/go-app-template")))] | first | .extra.Digest' dist/artifacts.json)
+          ghcr=$(jq -r '[.[] | select(.type == "Docker Manifest" and (.name | startswith("ghcr.io/")))] | first | .extra.Digest' dist/artifacts.json)
+          echo "dockerhub=$dockerhub" >> "$GITHUB_OUTPUT"
+          echo "ghcr=$ghcr" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        if: github.event_name != 'pull_request'
+        with:
+          subject-name: index.docker.io/mccutchen/go-app-template
+          subject-digest: ${{ steps.image-digests.outputs.dockerhub }}
+          push-to-registry: true
+
+      - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        if: github.event_name != 'pull_request'
+        with:
+          subject-name: ghcr.io/mccutchen/go-app-template
+          subject-digest: ${{ steps.image-digests.outputs.ghcr }}
+          push-to-registry: true
