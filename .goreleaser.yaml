@@ -73,6 +73,22 @@ kos:
     sbom: spdx
     creation_time: "{{.CommitTimestamp}}"
     ko_data_creation_time: "{{.CommitTimestamp}}"
+    labels:
+      org.opencontainers.image.created: "{{.Date}}"
+      org.opencontainers.image.revision: "{{.FullCommit}}"
+      org.opencontainers.image.version: "{{.Version}}"
+      org.opencontainers.image.source: "{{.GitURL}}"
+      org.opencontainers.image.url: "{{.GitURL}}"
+      org.opencontainers.image.title: "{{.ProjectName}}"
+      org.opencontainers.image.licenses: MIT
+    annotations:
+      org.opencontainers.image.created: "{{.Date}}"
+      org.opencontainers.image.revision: "{{.FullCommit}}"
+      org.opencontainers.image.version: "{{.Version}}"
+      org.opencontainers.image.source: "{{.GitURL}}"
+      org.opencontainers.image.url: "{{.GitURL}}"
+      org.opencontainers.image.title: "{{.ProjectName}}"
+      org.opencontainers.image.licenses: MIT
     env:
       - CGO_ENABLED=0
     flags:
