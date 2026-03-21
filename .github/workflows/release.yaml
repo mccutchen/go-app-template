@@ -1,0 +1,69 @@
+name: release
+
+"on":
+  release:
+    types: [created]
+  # We do not trigger builds for every commit, only for tagged releases.
+  # Uncomment this to enablle building for pull requests, to debug this
+  # workflow.
+  #
+  # pull_request:
+  #   branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    permissions:
+      # for pushing releases and signing/attesting release artifacts
+      contents: write
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        with:
+          go-version: 'stable'
+          # caching explicitly disabled in release workflows
+          # https://docs.zizmor.sh/audits/#cache-poisoning
+          cache: false
+
+      - uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+      - uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
+
+      - uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
+        with:
+          # On pull requests, use --snapshot
+          args: release ${{ github.event_name == 'pull_request' && '--snapshot' }}
+          version: '~> v2'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          QUILL_NOTARY_ISSUER: ${{ secrets.QUILL_NOTARY_ISSUER }}
+          QUILL_NOTARY_KEY: ${{ secrets.QUILL_NOTARY_KEY }}
+          QUILL_NOTARY_KEY_ID: ${{ secrets.QUILL_NOTARY_KEY_ID }}
+          QUILL_SIGN_P12: ${{ secrets.QUILL_SIGN_P12 }}
+          QUILL_SIGN_PASSWORD: ${{ secrets.QUILL_SIGN_PASSWORD }}
+          RELEASE_TARGET: ${{ github.event_name == 'pull_request' && 'release-dry-run' || 'release' }}
+
+      - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-checksums: ./dist/checksums.txt
