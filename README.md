@@ -8,7 +8,7 @@
 Template repo for Go CLI apps.
 
 TODO:
-- Replace go-app-template with new repo name
+- Globally replace go-app-template with new repo name
 - Add high level description
 - Add usage examples
 - Update GitHub Actions secrets at https://github.com/mccutchen/<REPO>/settings/secrets/actions
