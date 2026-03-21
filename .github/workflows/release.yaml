@@ -68,25 +68,33 @@ jobs:
         with:
           subject-checksums: ./dist/checksums.txt
 
-      - name: Extract OCI image digests
-        if: github.event_name != 'pull_request'
-        id: image-digests
+      - name: Extract OCI image info
+        id: oci
         run: |
-          dockerhub=$(jq -r '[.[] | select(.type == "Docker Manifest" and (.name | startswith("mccutchen/go-app-template")))] | first | .extra.Digest' dist/artifacts.json)
-          ghcr=$(jq -r '[.[] | select(.type == "Docker Manifest" and (.name | startswith("ghcr.io/")))] | first | .extra.Digest' dist/artifacts.json)
-          echo "dockerhub=$dockerhub" >> "$GITHUB_OUTPUT"
-          echo "ghcr=$ghcr" >> "$GITHUB_OUTPUT"
+          # All registries share one digest for the same multi-arch manifest content.
+          # Extract it once, plus each unique registry image name as an indexed output.
+          manifests=$(jq '[.[] | select(.type == "Docker Manifest")]' dist/artifacts.json)
+          echo "digest=$(echo "$manifests" | jq -r '[.[].extra.Digest] | unique | .[0]')" >> "$GITHUB_OUTPUT"
+          i=0
+          while IFS= read -r name; do
+            echo "name$i=$name" >> "$GITHUB_OUTPUT"
+            i=$((i + 1))
+          done < <(echo "$manifests" | jq -r '[.[].name | split(":")[0]] | unique | sort[]')
 
       - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        if: github.event_name != 'pull_request'
         with:
-          subject-name: index.docker.io/mccutchen/go-app-template
-          subject-digest: ${{ steps.image-digests.outputs.dockerhub }}
-          push-to-registry: true
+          subject-name: ${{ steps.oci.outputs.name0 }}
+          subject-digest: ${{ steps.oci.outputs.digest }}
+          push-to-registry: ${{ github.event_name != 'pull_request' }}
 
       - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        if: github.event_name != 'pull_request'
         with:
-          subject-name: ghcr.io/mccutchen/go-app-template
-          subject-digest: ${{ steps.image-digests.outputs.ghcr }}
-          push-to-registry: true
+          subject-name: ${{ steps.oci.outputs.name1 }}
+          subject-digest: ${{ steps.oci.outputs.digest }}
+          push-to-registry: ${{ github.event_name != 'pull_request' }}
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: goreleaser-artifacts
+          path: dist/artifacts.json
