@@ -17,6 +17,8 @@ jobs:
   release:
     name: release
     runs-on: ubuntu-latest
+    outputs:
+      oci-matrix: ${{ steps.oci-matrix.outputs.matrix }}
     permissions:
       # for pushing releases and signing/attesting release artifacts
       contents: write
@@ -68,33 +70,47 @@ jobs:
         with:
           subject-checksums: ./dist/checksums.txt
 
-      - name: Extract OCI image info
-        id: oci
-        run: |
-          # All registries share one digest for the same multi-arch manifest content.
-          # Extract it once, plus each unique registry image name as an indexed output.
-          manifests=$(jq '[.[] | select(.type == "Docker Manifest")]' dist/artifacts.json)
-          echo "digest=$(echo "$manifests" | jq -r '[.[].extra.Digest] | unique | .[0]')" >> "$GITHUB_OUTPUT"
-          i=0
-          while IFS= read -r name; do
-            echo "name$i=$name" >> "$GITHUB_OUTPUT"
-            i=$((i + 1))
-          done < <(echo "$manifests" | jq -r '[.[].name | split(":")[0]] | unique | sort[]')
-
-      - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-name: ${{ steps.oci.outputs.name0 }}
-          subject-digest: ${{ steps.oci.outputs.digest }}
-          push-to-registry: ${{ github.event_name != 'pull_request' }}
-
-      - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-name: ${{ steps.oci.outputs.name1 }}
-          subject-digest: ${{ steps.oci.outputs.digest }}
-          push-to-registry: ${{ github.event_name != 'pull_request' }}
-
-      - uses: actions/upload-artifact@v4
-        if: always()
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: goreleaser-artifacts
           path: dist/artifacts.json
+
+      - name: "Run: extract OCI manifest matrix"
+        id: oci-matrix
+        run: |
+          # Build a matrix of {name, digest} objects, one per registry, for
+          # the attest-oci job.
+          #
+          # Note: all manifests share a single digest.
+          echo "matrix=$(jq -c '[.[] | select(.type == "Docker Manifest") | {name: (.name | split(":")[0]), digest: .extra.Digest}] | unique_by(.name)' dist/artifacts.json)" >> "$GITHUB_OUTPUT"
+
+
+  attest-oci:
+    name: attest OCI images
+    needs: [release]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+      packages: write
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.release.outputs.oci-matrix) }}
+    steps:
+      - uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-name: ${{ matrix.name }}
+          subject-digest: ${{ matrix.digest }}
+          push-to-registry: true
