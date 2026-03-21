@@ -85,7 +85,7 @@ jobs:
 
 
   attest-oci:
-    name: attest OCI images
+    name: attest-oci
     needs: [release]
     runs-on: ubuntu-latest
     permissions:
