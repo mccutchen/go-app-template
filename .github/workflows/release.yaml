@@ -88,7 +88,6 @@ jobs:
   attest-oci:
     name: attest OCI images
     needs: [release]
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
