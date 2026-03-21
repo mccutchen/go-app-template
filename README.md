@@ -11,6 +11,15 @@ TODO:
 - Replace go-app-template with new repo name
 - Add high level description
 - Add usage examples
+- Update GitHub Actions secrets at https://github.com/mccutchen/<REPO>/settings/secrets/actions
+  - CODECOV_TOKEN (https://github.com/mccutchen/go-app-template/settings/secrets/actions)
+  - DOCKERHUB_USERNAME
+  - DOCKERHUB_TOKEN (https://app.docker.com/accounts/<USERNAME>/settings/personal-access-tokens)
+  - QUILL_NOTARY_ISSUER
+  - QUILL_NOTARY_KEY
+  - QUILL_NOTARY_KEY_ID
+  - QUILL_SIGN_P12
+  - QUILL_SIGN_PASSWORD
 - Add CODECOV_TOKEN secret to GitHub Actions environment secrets
   - Get token from https://app.codecov.io/github/mccutchen/<REPO>/config/general
 - Set up branch protection rules
