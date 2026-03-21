@@ -38,12 +38,6 @@ jobs:
       - uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
       - uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
 
-      # Only install goreleaser instead of running it; we'll run `make release`
-      # in a subsequent step
-      - uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
-        with:
-          install-only: true
-
       - uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -55,13 +49,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Run goreleaser to build multi-arch and multi-platform release
-      # artifacts.
-      #
-      # Note: artifacts will only be uploaded to a GitHub release when
-      # triggered by a new release event, not on pull request events (if
-      # enabled for testing).
-      - name: "Run script: make release"
+      - uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
+        with:
+          # On pull requests, use --snapshot
+          args: release ${{ github.event_name == 'pull_request' && '--snapshot' }}
+          version: '~> v2'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           QUILL_NOTARY_ISSUER: ${{ secrets.QUILL_NOTARY_ISSUER }}
@@ -69,15 +61,7 @@ jobs:
           QUILL_NOTARY_KEY_ID: ${{ secrets.QUILL_NOTARY_KEY_ID }}
           QUILL_SIGN_P12: ${{ secrets.QUILL_SIGN_P12 }}
           QUILL_SIGN_PASSWORD: ${{ secrets.QUILL_SIGN_PASSWORD }}
-          # On pull requests, we run `make release-dry-run` and on actual
-          # releases we run `make release`
           RELEASE_TARGET: ${{ github.event_name == 'pull_request' && 'release-dry-run' || 'release' }}
-        run:
-          # Note that we override the CMD_GORELEASER var to use the binary
-          # installed by the goreleaser/goreleaser-action step above instead
-          # of using the Makefile's default `go run ...` approach because it
-          # takes a long time to build goreleaser itself.
-          make "${RELEASE_TARGET}" CMD_GORELEASER="goreleaser"
 
       - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
