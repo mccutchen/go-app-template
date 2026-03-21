@@ -15,13 +15,13 @@ TODO:
   - CODECOV_TOKEN (https://github.com/mccutchen/go-app-template/settings/secrets/actions)
   - DOCKERHUB_USERNAME
   - DOCKERHUB_TOKEN (https://app.docker.com/accounts/<USERNAME>/settings/personal-access-tokens)
-  - QUILL_NOTARY_ISSUER
-  - QUILL_NOTARY_KEY
-  - QUILL_NOTARY_KEY_ID
-  - QUILL_SIGN_P12
-  - QUILL_SIGN_PASSWORD
-- Add CODECOV_TOKEN secret to GitHub Actions environment secrets
-  - Get token from https://app.codecov.io/github/mccutchen/<REPO>/config/general
+  - Apple Developer credentials for signing and notarizing macOS binaries, via
+    the `Apple Developer: release signing key` item in 1P:
+    - QUILL_NOTARY_ISSUER
+    - QUILL_NOTARY_KEY
+    - QUILL_NOTARY_KEY_ID
+    - QUILL_SIGN_P12
+    - QUILL_SIGN_PASSWORD
 - Set up branch protection rules
   - Require linear history
   - Require pull requests
