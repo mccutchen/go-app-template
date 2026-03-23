@@ -81,10 +81,10 @@ fmt:
 # [1]: https://github.com/anchore/quill/blob/main/README.md#usage
 # [2]: https://goreleaser.com/customization/notarize/
 # ===========================================================================
-release-dry-run: clean
-	$(CMD_GORELEASER) release --clean --verbose --snapshot --skip=publish
-.PHONY: release-dry-run
-
 release: clean
 	$(CMD_GORELEASER) release --clean --verbose
 .PHONY: release
+
+release-dry-run: clean
+	$(CMD_GORELEASER) release --clean --verbose --snapshot
+.PHONY: release-dry-run
