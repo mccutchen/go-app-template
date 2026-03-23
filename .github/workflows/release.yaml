@@ -91,11 +91,12 @@ jobs:
         with:
           subject-checksums: ./dist/checksums.txt
 
-
-
+  # separate job so that it can be driven by the output from the oci-matrix
+  # step above.
   attest-oci:
     name: attest-oci
     needs: [release]
+    if: github.event_name != 'pull_request' # skip on pull requests because ko will not push images to attest
     runs-on: ubuntu-latest
     permissions:
       id-token: write      # request OIDC token for Sigstore signing
