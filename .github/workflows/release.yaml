@@ -18,7 +18,7 @@ jobs:
     name: release
     runs-on: ubuntu-latest
     outputs:
-      oci-matrix: ${{ steps.oci-matrix.outputs.matrix }}
+      oci-attest-matrix: ${{ steps.oci-attest-matrix.outputs.matrix }}
     permissions:
       contents: write      # publish GitHub release and upload release artifacts
       packages: write      # push OCI images to ghcr.io
@@ -54,7 +54,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "Run: make release"
+      - name: "Run make release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           QUILL_NOTARY_ISSUER: ${{ secrets.QUILL_NOTARY_ISSUER }}
@@ -72,8 +72,8 @@ jobs:
           # takes a long time to build goreleaser itself.
           make "${RELEASE_TARGET}" CMD_GORELEASER="goreleaser"
 
-      - name: "Run: extract OCI manifest matrix"
-        id: oci-matrix
+      - name: "Build oci-attest-matrix"
+        id: oci-attest-matrix
         run: |
           # Build a matrix of {name, digest} objects for the attest-oci job:
           # one entry per registry, all sharing the single unique digest.
@@ -91,8 +91,8 @@ jobs:
         with:
           subject-checksums: ./dist/checksums.txt
 
-  # separate job so that it can be driven by the output from the oci-matrix
-  # step above.
+  # separate job so that it can be driven by the output from the
+  # oci-attest-matrix step above.
   attest-oci:
     name: attest-oci
     needs: [release]
@@ -104,17 +104,17 @@ jobs:
       packages: write      # push OCI referrer attestations to ghcr.io
     strategy:
       matrix:
-        include: ${{ fromJson(needs.release.outputs.oci-matrix) }}
+        include: ${{ fromJson(needs.release.outputs.oci-attest-matrix) }}
     steps:
       - uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
