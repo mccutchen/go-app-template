@@ -72,15 +72,6 @@ jobs:
           # takes a long time to build goreleaser itself.
           make "${RELEASE_TARGET}" CMD_GORELEASER="goreleaser"
 
-      - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-checksums: ./dist/checksums.txt
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: goreleaser-artifacts
-          path: dist/artifacts.json
-
       - name: "Run: extract OCI manifest matrix"
         id: oci-matrix
         run: |
@@ -88,7 +79,17 @@ jobs:
           # the attest-oci job.
           #
           # Note: all manifests share a single digest.
-          echo "matrix=$(jq -c '[.[] | select(.type == "Docker Manifest") | {name: (.name | split(":")[0]), digest: .extra.Digest}] | unique_by(.name)' dist/artifacts.json)" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(jq -c '[.[] | select(.type == "Docker Manifest") | {name: (.name | split("@")[0] | split(":")[0]), digest: .extra.Digest}] | unique_by(.name)' dist/artifacts.json)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: goreleaser-artifacts
+          path: dist/artifacts.json
+
+      - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-checksums: ./dist/checksums.txt
+
 
 
   attest-oci:
