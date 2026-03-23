@@ -75,11 +75,12 @@ jobs:
       - name: "Run: extract OCI manifest matrix"
         id: oci-matrix
         run: |
-          # Build a matrix of {name, digest} objects, one per registry, for
-          # the attest-oci job.
-          #
-          # Note: all manifests share a single digest.
-          echo "matrix=$(jq -c '[.[] | select(.type == "Docker Manifest") | {name: (.name | split("@")[0] | split(":")[0]), digest: .extra.Digest}] | unique_by(.name)' dist/artifacts.json)" >> "$GITHUB_OUTPUT"
+          # Build a matrix of {name, digest} objects for the attest-oci job:
+          # one entry per registry, all sharing the single unique digest.
+          manifests=$(jq '[.[] | select(.type == "Docker Manifest")]' dist/artifacts.json)
+          digest=$(echo "$manifests" | jq -r '[.[].extra.Digest] | unique | .[0]')
+          names=$(echo "$manifests" | jq -c '[.[].name | split("@")[0] | split(":")[0]] | unique')
+          echo "matrix=$(echo "$names" | jq -c --arg digest "$digest" 'map({name: ., digest: $digest})')" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
