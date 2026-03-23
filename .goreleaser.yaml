@@ -60,7 +60,7 @@ release:
 
 kos:
   - repositories:
-      - mccutchen/go-app-template
+      - index.docker.io/mccutchen/go-app-template
       - ghcr.io/mccutchen/go-app-template
     tags:
       - "{{.Version}}"
