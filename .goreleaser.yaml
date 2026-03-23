@@ -63,7 +63,7 @@ kos:
       - mccutchen/go-app-template
       - ghcr.io/mccutchen/go-app-template
     tags:
-      - '{{if .IsSnapshot}}{{.ShortCommit}}{{else}}{{.Version}}{{end}}'
+      - '{{.Version}}'
       - '{{if not .IsSnapshot}}{{.Major}}.{{.Minor}}{{end}}'
       - '{{if not .IsSnapshot}}latest{{end}}'
     bare: true
@@ -110,9 +110,7 @@ docker_signs:
 
 notarize:
   macos:
-    - enabled: "{{not .IsSnapshot }}"
-
-      sign:
+    - sign:
         certificate: "{{.Env.QUILL_SIGN_P12}}"
         password: "{{.Env.QUILL_SIGN_PASSWORD}}"
 
