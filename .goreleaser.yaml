@@ -106,7 +106,7 @@ docker_signs:
       - sign
       - --yes
       - "${artifact}"
-    artifacts: all
+    artifacts: manifests
 
 notarize:
   macos:
