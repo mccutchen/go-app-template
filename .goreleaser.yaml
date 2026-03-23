@@ -63,9 +63,9 @@ kos:
       - mccutchen/go-app-template
       - ghcr.io/mccutchen/go-app-template
     tags:
-      - '{{.Version}}'
-      - '{{if not .IsSnapshot}}{{.Major}}.{{.Minor}}{{end}}'
-      - '{{if not .IsSnapshot}}latest{{end}}'
+      - "{{.Version}}"
+      - "{{.Major}}.{{.Minor}}"
+      - latest
     bare: true
     platforms:
       - linux/amd64
