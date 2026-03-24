@@ -101,12 +101,7 @@ kos:
       - "-X main.date={{.Date}}"
 
 docker_signs:
-  - cmd: cosign
-    args:
-      - sign
-      - --yes
-      - "${digest}"
-    artifacts: manifests
+  - artifacts: manifests
 
 notarize:
   macos:
