@@ -60,7 +60,7 @@ release:
 
 kos:
   - repositories:
-      - index.docker.io/mccutchen/go-app-template
+      - mccutchen/go-app-template
       - ghcr.io/mccutchen/go-app-template
     tags:
       - "{{.Version}}"
@@ -101,7 +101,12 @@ kos:
       - "-X main.date={{.Date}}"
 
 docker_signs:
-  - artifacts: manifests
+  - cmd: cosign
+    args:
+      - sign
+      - --yes
+      - "${artifact}"
+    artifacts: manifests
 
 notarize:
   macos:
