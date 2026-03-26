@@ -60,7 +60,7 @@ release:
 
 dockers_v2:
   - images:
-      - mccutchen/go-app-template
+      - index.docker.io/mccutchen/go-app-template
       - ghcr.io/mccutchen/go-app-template
     tags:
       - "{{.Version}}"
