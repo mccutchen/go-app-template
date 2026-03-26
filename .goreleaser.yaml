@@ -94,7 +94,9 @@ docker_signs:
       - sign
       - --yes
       - "${artifact}@${digest}"
-    artifacts: all
+    # '' is for images built by dockers_v2, per the docs:
+    # https://goreleaser.com/customization/sign/docker_sign/
+    artifacts: ''
 
 notarize:
   macos:
