@@ -94,7 +94,7 @@ docker_signs:
       - sign
       - --yes
       - "${artifact}@${digest}"
-    artifacts: manifests
+    artifacts: all
 
 notarize:
   macos:
@@ -110,3 +110,9 @@ notarize:
         # Apple rejects JWTs with ttl > 20m, quill sets token lifetime to
         # this timeout + 2m.
         timeout: 18m
+
+changelog:
+  disable: true
+
+announce:
+  skip: true
