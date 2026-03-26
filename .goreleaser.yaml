@@ -94,7 +94,9 @@ docker_signs:
       - sign
       - --yes
       - "${artifact}@${digest}"
-    artifacts: manifests
+    # '' is for images built by dockers_v2, per the docs:
+    # https://goreleaser.com/customization/sign/docker_sign/
+    artifacts: ''
 
 notarize:
   macos:
@@ -110,3 +112,9 @@ notarize:
         # Apple rejects JWTs with ttl > 20m, quill sets token lifetime to
         # this timeout + 2m.
         timeout: 18m
+
+changelog:
+  disable: true
+
+announce:
+  skip: true
