@@ -17,8 +17,6 @@ jobs:
   release:
     name: release
     runs-on: ubuntu-latest
-    outputs:
-      oci-attest-matrix: ${{ steps.oci-attest-matrix.outputs.matrix }}
     permissions:
       contents: write      # publish GitHub release and upload release artifacts
       packages: write      # push OCI images to ghcr.io
@@ -73,16 +71,6 @@ jobs:
           # takes a long time to build goreleaser itself.
           make "${RELEASE_TARGET}" CMD_GORELEASER="goreleaser"
 
-      - name: "Build oci-attest-matrix"
-        id: oci-attest-matrix
-        run: |
-          # Build a matrix of {name, digest} objects for the attest-oci job:
-          # one entry per registry, all sharing the single unique digest.
-          images=$(jq '[.[] | select(.type == "Docker Image")]' dist/artifacts.json)
-          digest=$(echo "$images" | jq -r '[.[].extra.Digest] | unique | .[0]')
-          names=$(echo "$images" | jq -c '[.[].name | split("@")[0] | split(":")[0]] | unique')
-          echo "matrix=$(echo "$names" | jq -c --arg digest "$digest" 'map({name: ., digest: $digest})')" >> "$GITHUB_OUTPUT"
-
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: goreleaser-artifacts
@@ -92,34 +80,7 @@ jobs:
         with:
           subject-checksums: ./dist/checksums.txt
 
-  # separate job so that it can be driven by the output from the
-  # oci-attest-matrix step above.
-  attest-oci:
-    name: attest-oci
-    needs: [release]
-    if: github.event_name != 'pull_request' # skip on pull requests because buildx will not push images to attest
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write      # request OIDC token for Sigstore signing
-      attestations: write  # publish attestations to GitHub attestation store
-      packages: write      # push OCI referrer attestations to ghcr.io
-    strategy:
-      matrix:
-        include: ${{ fromJson(needs.release.outputs.oci-attest-matrix) }}
-    steps:
-      - uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
-        with:
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
-          subject-name: ${{ matrix.name }}
-          subject-digest: ${{ matrix.digest }}
+          subject-checksums: ./dist/digests.txt
           push-to-registry: true
