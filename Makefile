@@ -5,10 +5,10 @@ TEST_ARGS     ?= -race -count=1 -timeout=60s
 DOCS_PORT     ?= :8080
 
 # 3rd party tools
-CMD_GOFUMPT     := go run mvdan.cc/gofumpt@v0.8.0
-CMD_GORELEASER  := go run github.com/goreleaser/goreleaser/v2@v2.14.3
-CMD_REVIVE      := go run github.com/mgechev/revive@v1.15.0
-CMD_STATICCHECK := go run honnef.co/go/tools/cmd/staticcheck@2026.1
+GOFUMPT     := go run mvdan.cc/gofumpt@v0.9.2
+GORELEASER  := go run github.com/goreleaser/goreleaser/v2@v2.15.2
+REVIVE      := go run github.com/mgechev/revive@v1.15.0
+STATICCHECK := go run honnef.co/go/tools/cmd/staticcheck@2026.1
 
 # Where built assets will be placed
 APP_NAME ?= $(shell basename $$PWD)
@@ -49,14 +49,14 @@ testcover: testci
 # Linting/formatting
 # ===========================================================================
 lint:
-	test -z "$$($(CMD_GOFUMPT) -d -e .)" || (echo "Error: gofmt failed"; $(CMD_GOFUMPT) -d -e . ; exit 1)
+	test -z "$$($(GOFUMPT) -d -e .)" || (echo "Error: gofmt failed"; $(GOFUMPT) -d -e . ; exit 1)
 	go vet ./...
-	$(CMD_REVIVE) -set_exit_status ./...
-	$(CMD_STATICCHECK) ./...
+	$(REVIVE) -set_exit_status ./...
+	$(STATICCHECK) ./...
 .PHONY: lint
 
 fmt:
-	$(CMD_GOFUMPT) -d -e -w .
+	$(GOFUMPT) -d -e -w .
 .PHONY: fmt
 
 
@@ -82,9 +82,9 @@ fmt:
 # [2]: https://goreleaser.com/customization/notarize/
 # ===========================================================================
 release: clean
-	$(CMD_GORELEASER) release --clean --verbose
+	$(GORELEASER) release --clean --verbose
 .PHONY: release
 
 release-dry-run: clean
-	$(CMD_GORELEASER) release --clean --verbose --snapshot
+	$(GORELEASER) release --clean --verbose --snapshot
 .PHONY: release-dry-run

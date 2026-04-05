@@ -73,7 +73,7 @@ jobs:
           # installed by the goreleaser/goreleaser-action step above instead
           # of using the Makefile's default `go run ...` approach because it
           # takes a long time to build goreleaser itself.
-          make "${RELEASE_TARGET}" CMD_GORELEASER="goreleaser"
+          make "${RELEASE_TARGET}" GORELEASER="goreleaser"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

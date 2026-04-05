@@ -64,8 +64,8 @@ dockers_v2:
       - ghcr.io/mccutchen/go-app-template
     tags:
       - "{{.Version}}"
-      - "{{.Major}}.{{.Minor}}"
-      - latest
+      - '{{ if not .Prerelease }}{{.Major}}.{{.Minor}}{{ end }}'
+      - '{{ if not .Prerelease }}latest{{ end }}'
     platforms:
       - linux/amd64
       - linux/arm64
