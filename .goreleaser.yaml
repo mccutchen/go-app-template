@@ -100,10 +100,10 @@ docker_signs:
 
 notarize:
   macos:
-    - sign:
+    - enabled: '{{ isEnvSet "QUILL_SIGN_P12" }}'
+      sign:
         certificate: "{{.Env.QUILL_SIGN_P12}}"
         password: "{{.Env.QUILL_SIGN_PASSWORD}}"
-
       notarize:
         issuer_id: "{{.Env.QUILL_NOTARY_ISSUER}}"
         key_id: "{{.Env.QUILL_NOTARY_KEY_ID}}"
