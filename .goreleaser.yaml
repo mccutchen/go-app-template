@@ -6,7 +6,8 @@ git:
   tag_sort: "-creatordate"
 
 builds:
-  - env:
+  - main: ./...
+    env:
       - CGO_ENABLED=0
     goos:
       - darwin
